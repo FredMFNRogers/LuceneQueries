@@ -1,0 +1,162 @@
+./Sigma-Rules/rules/windows/powershell/powershell_script/posh_ps_invoke_sharefinder_discovery.yml
+(winlog.channel:(Microsoft\-Windows\-PowerShell\/Operational OR PowerShellCore\/Operational)) AND powershell.file.script_block_text:*Invoke\-ShareFinder*
+ 
+./Sigma-Rules/rules/windows/powershell/powershell_module/posh_pm_invoke-sharefinder_discovery.yml
+winlog.event_data.Payload:*Invoke\-ShareFinder*
+ 
+./Sigma-Rules/rules/windows/powershell/powershell_module/posh_pm_enable_wdigest_using_powershell.yml
+winlog.event_data.Payload:*Set\-ItemProperty* AND winlog.event_data.Payload:*UseLogonCredential* AND winlog.event_data.Payload:*WDigest* AND winlog.event_data.Payload:*Value* AND winlog.event_data.Payload:*1*
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_lazagne_dumping_credentials.yml
+(((process.executable:(*\\cmd.exe OR *\\powershell.exe)) AND (process.command_line:*\/c* AND process.command_line:*reg.exe* AND process.command_line:*save*) AND process.parent.command_line:*all*) AND ((process.parent.command_line:(*\-oN* OR *\-oA* OR *\-oJ* OR *\-quiet* OR *\-output*)) AND (process.command_line:(*hklm\\system* OR *hklm\\security* OR *hklm\\sam*)))) OR (process.executable:*\\lazagne.exe AND (process.command_line:(*browsers* OR *chats* OR *databases* OR *games* OR *memory* OR *git* OR *maven* OR *sysadmin* OR *php* OR *svn* OR *multimedia*)))
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_scheduled_task_executing_powershell_ecoded_payload_from_registry.yml
+(process.executable:*\\schtasks.exe AND (process.command_line:*\/Create* AND process.command_line:*\/SC*)) AND (process.command_line:*FromBase64String* AND process.command_line:*powershell* AND process.command_line:*Get\-ItemProperty* AND process.command_line:*HKCU\:*)
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_deleting_windows_defender_scheduled_tasks.yml
+process.executable:*\\schtasks.exe AND (process.command_line:*\/delete* AND process.command_line:*\/tn* AND process.command_line:*Windows\ Defender*)
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_cobaltstrike_operator_bloopers_modules.yml
+(process.command_line:(*Invoke\-UserHunter* OR *Invoke\-ShareFinder* OR *Invoke\-Kerberoast* OR *Invoke\-SMBAutoBrute* OR *Invoke\-Nightmare* OR *zerologon* OR *av_query*)) AND process.executable:*\\cmd.exe
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_cmdkey.yml
+process.executable:*\\cmdkey.exe AND (process.command_line:(*\ \-d* OR *\ \/d* OR *\ –d* OR *\ —d* OR *\ ―d*) OR process.command_line:(*\ \-a* OR *\ \/a* OR *\ –a* OR *\ —a* OR *\ ―a*) OR process.command_line:(*\ \-l* OR *\ \/l* OR *\ –l* OR *\ —l* OR *\ ―l*))
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_bumblebee_wmiprvse_execution_pattern.yml
+(process.executable:(*ImagingDevices.exe OR *wabmig.exe)) AND winlog.event_data.ParentImage:endswith:WmiPrvSE.exe
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_custom_cobalt_strike_command_execution.yml
+process.executable:*\\powershell.exe AND (process.command_line:*http\:\/\/127.0.0.1* AND process.command_line:*%\{\(IRM\ $_\)\}* AND process.command_line:*Invoke*)
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_defaultaccount_usage.yml
+process.command_line:(*net\ user\ \/add\ DefaultAccount* OR *net\ user\ DefaultAccount\ \/active\:yes* OR *net\ localgroup\ Administrators\ \/add\ DefaultAccount* OR *net\ localgroup\ 'Remote\ Desktop\ Users'\ \/add\ DefaultAccount*)
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_conhost_headless.yml
+process.executable:*\\conhost.exe AND process.command_line:*\ \-\-headless\ 
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_system_time_lookup.yml
+(process.command_line:*\/c* AND process.command_line:*time*) AND process.executable:*\\cmd.exe
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_enabling_restricted_admin_mode.yml
+((process.executable:(*\\powershell.exe OR *\\reg.exe)) AND (process.command_line:*\/add* AND process.command_line:*DisableRestrictedAdmin* AND process.command_line:*hklm\\system\\currentcontrolset\\control\\lsa*)) AND (process.command_line:(*\-Value\ 0* OR *\/d\ 0*))
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_qbot_exec_via_scheduled_task.yml
+process.command_line:*schtasks.exe* AND process.command_line:*regsvr32.exe\ \-s* AND process.command_line:*SYSTEM*
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_psexec_custom_named_service_binary.yml
+process.executable:*\\psexec.exe AND process.command_line:*\ \-r\ *
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_renamed_autohotkey_binary.yml
+(process.pe.original_file_name:AutoHotkey.exe OR process.pe.product:*AutoHotkey*) AND (NOT (process.executable:(*\\AutoHotkey.exe OR *\\AutoHotkeyA32.exe OR *\\AutoHotkeyU32.exe OR *\\AutoHotkeyU64.exe OR *\\AutoHotkey32.exe OR *\\AutoHotkey64.exe OR *\\AutoHotkey32_UIA.exe OR *\\AutoHotkey64_UIA.exe)))
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_adfind_discovery.yml
+(process.command_line:(*adfind\ \-gcb\ \-sc\ trustdmp* OR *adfind\ \-f\ \"\(objectcategory\=group\)\"* OR *adfind\ \-f\ \(objectcategory\=group\)* OR *adfind\ \-subnets\ \-f\ \(objectCategory\=subnet\)* OR *adfind\ \-sc\ trustdmp* OR *adfind\ \-f\ \"\(objectcategory\=organizationalUnit\)\"* OR *adfind\ \-f\ \(objectcategory\=organizationalUnit\)* OR *adfind\ \-f\ \"objectcategory\=computer\"* OR *adfind\ \-f\ objectcategory\=computer* OR *adfind\ \-f\ \"\(objectcategory\=person\)\"* OR *adfind\ \-f\ \(objectcategory\=person\)*)) OR (process.command_line:(*\-gcb\ \-sc\ trustdmp* OR *\-f\ \"\(objectcategory\=group\)\"* OR *\-f\ \(objectcategory\=group\)* OR *\-subnets\ \-f\ \(objectCategory\=subnet\)* OR *\-sc\ trustdmp* OR *\-f\ \"\(objectcategory\=organizationalUnit\)\"* OR *\-f\ \(objectcategory\=organizationalUnit\)* OR *\-f\ \"objectcategory\=computer\"* OR *\-f\ objectcategory\=computer* OR *\-f\ \"\(objectcategory\=person\)\"* OR *\-f\ \(objectcategory\=person\)*))
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_emotet_child_process_spawn_pattern.yml
+(process.command_line:(ipconfig\ \/all OR systeminfo)) AND process.parent.executable:*regsvr32.exe AND process.parent.command_line:*.dll*
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_remote_tasklist.yml
+process.executable:*\\tasklist.exe AND process.command_line:*\ \/S\ *
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_enabling_rdp_service_via_reg_command_execution.yml
+(process.executable:*\\reg.exe AND (process.command_line:*add* AND process.command_line:*HKLM\\SYSTEM\\CurrentControlSet\\Control\\Terminal\ Server* AND process.command_line:*REG_DWORD*)) AND ((process.command_line:*WinStations\\RDP\-Tcp* AND (process.command_line:(*MaxInstanceCount* OR *fEnableWinStation*))) OR ((process.command_line:*Licensing\ Core* AND process.command_line:*EnableConcurrentSessions*) OR (process.command_line:(*TSUserEnabled* OR *TSEnabled* OR *TSAppCompat* OR *IdleWinStationPoolCount* OR *TSAdvertise* OR *AllowTSConnections* OR *fSingleSessionPerUser*))))
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_nim_pth_tooling.yml
+((process.command_line:(*\-i\ * OR *\-\-ip*)) OR (process.command_line:(*\-d\ * OR *\-\-domain*)) OR (process.command_line:(*\-u\ * OR *\-\-username*))) AND process.command_line:*\-\-hash* AND process.command_line:/[a-f0-9]{32}/ AND (process.parent.executable:(*\\powershell.exe OR *\\cmd.exe))
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_software_splashtop.yml
+process.pe.product:*SplashTop* AND process.pe.description:*SplashTop*
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_software_byot.yml
+(process.command_line:(*adf.bat* OR *adfind.bat* OR *locker.bat* OR *kill.bat* OR *def.bat* OR *start.bat* OR *shadow.bat* OR *logdelete.bat* OR *closeapps.bat*)) AND process.executable:*\\cmd.exe
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_mshta.yml
+(process.command_line:*wscript.shell* AND process.command_line:*new\ ActiveXObject* AND process.command_line:*regread*) AND process.executable:*mshta.exe
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_flawed_grace_cmd_injection.yml
+(process.executable:*\\cmd.exe AND (process.command_line:*\ \/I\ * AND process.command_line:*\ \/SI\ *)) OR (process.executable:*\\cmd.exe AND (process.command_line:*\ \/O\ * AND process.command_line:*\ \/SO\ *))
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_aws_cli_exfil.yml
+((process.command_line:(*\-\-region* OR *\-\-endpoint\-url*)) AND ((process.command_line:(*s3\ cp* OR *s3\ sync* OR *s3\ mv*)) AND process.command_line:*s3\:\/\/*)) OR process.command_line:*s3api\ put\-object*
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_uninstall_defender.yml
+(process.command_line:(*uninstall\-windowsfeature* OR *Windows\-Defender\-GUI*)) AND process.executable:*\\powershell.exe
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_mofcomp_execution.yml
+process.executable:*\\mofcomp.exe AND (process.parent.executable:(*\\cmd.exe OR *\\powershell.exe))
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_remote_dir_view.yml
+process.executable:*cmd.exe AND process.command_line:*dir\ *\\*\\c$\*\>\>*
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_winevent_security_query.yml
+(process.command_line:(*get\-eventlog* OR *security* OR *export\-csv*)) AND process.executable:*\\powershell.exe
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_suspicious_scheduled_task_creation_to_execute_lolbins.yml
+(process.executable:*schtasks.exe AND process.command_line:*\/create\ *) AND (process.command_line:(*regsvr32.exe* OR *rundll32.exe*))
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_hiding_local_user_accounts.yml
+(process.parent.executable:(*\\cmd.exe OR *\\powershell.exe)) AND process.executable:*\\reg.exe AND (process.command_line:*HKLM\\Software\\Microsoft\\Windows\ NT\\CurrentVersion\\Winlogon\\SpecialAccounts\\Userlist* AND process.command_line:*add* AND process.command_line:*\/t* AND process.command_line:*REG_DWORD* AND process.command_line:*\/v* AND process.command_line:*\/d\ 0*)
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_mimkiatz_command_line_with_ticket_export.yml
+(process.command_line:(*DumpCreds* OR *invoke\-mimikatz* OR *mimikatz*)) OR ((process.command_line:(*rpc* OR *token* OR *crypto* OR *dpapi* OR *sekurlsa* OR *kerberos* OR *lsadump* OR *privilege* OR *process* OR *export* OR *tickets*)) AND process.command_line:*\:\:*)
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_cobaltstrike_operator_bloopers_cmds.yml
+(process.command_line:(*psinject* OR *spawnas* OR *socks* OR *make_token* OR *remote\-exec* OR *rev2self* OR *shell* OR *dcsync* OR *upload* OR *sleep* OR *ls* OR *logonpasswords* OR *ps* OR *execute\-assembly* OR *pth* OR *getsystem*)) AND process.executable:*\\cmd.exe
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_ursnif_loader.yml
+(process.command_line:*\/C* AND process.command_line:*pause\ dll\ mail*) AND process.executable:*syswow64\\cmd.exe
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_nslookup_local.yml
+process.executable:*\\nslookup.exe AND process.command_line:*127.0.0.1* AND process.parent.executable:*\\cmd.exe AND process.parent.command_line:*\/c*
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_execution_of_zerologon_poc_executable.yml
+(process.parent.executable:*\\cmd.exe AND (process.executable:(*\\cool.exe OR *\\zero.exe)) AND (process.command_line:*Administrator* AND process.command_line:*\-c*)) AND ((process.command_line:*taskkill* AND process.command_line:*\/f* AND process.command_line:*\/im*) OR process.command_line:*powershell*)
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_enable_wdigest_using_powershell.yml
+process.executable:*\\powershell.exe AND (process.command_line:*Set\-ItemProperty* AND process.command_line:*WDigest* AND process.command_line:*UseLogonCredential* AND process.command_line:*Value* AND process.command_line:*1*)
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_ateraagent_malicious_installations.yml
+(process.executable:*\\AteraAgent.exe AND (process.command_line:*\/i\ * AND process.command_line:*IntegratorLogin\=*)) AND (process.command_line:(*@gmail.com* OR *@hotmail.com* OR *@hotmail.com* OR *@yandex.ru* OR *@mail.ru* OR *@outlook.com* OR *@protonmail.com* OR *@dropmail.me*))
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_suspicious_commands_by_sql_server.yml
+process.parent.executable:*\\sqlservr.exe AND process.executable:*\\cmd.exe AND (process.command_line:(*del* OR *cacls* OR *attrib\ \+s\ \+h* OR *takeown* OR *taskkill* OR *net* OR *reg\ add* OR *echo* OR *cscript* OR *whoami* OR *netsh*))
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_chcp_codepage_locale_lookup.yml
+process.executable:*\\chcp.com AND process.command_line:*chcp AND process.parent.executable:*\\cmd.exe AND process.parent.command_line:*\/c*
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_java_script_file_exec_msdos_notation.yml
+process.command_line:*\~1.js* AND (process.executable:(*\\wscript.exe OR *\\cscript.exe))
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_registry_query_for_wdigest.yml
+process.executable:*\\reg.exe AND (process.command_line:*query* AND process.command_line:*WDigest* AND process.command_line:*UseLogonCredential*)
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_exchange_webshell_creation.yml
+process.command_line:*New\-ManagementRoleAssignment\ \-Role\ \"Mailbox\ Import\ Export\"\ \-User\ \"administrator@* OR (process.command_line:*New\-MailboxExportRequest\ \-Mailbox* AND process.command_line:*\-FilePath\ \"\\localhost\\C$* AND process.command_line:*\-IncludeFolders\ \(\"#Drafts#\"\)* AND process.command_line:*aspx*)
+ 
+./Sigma-Rules/rules/windows/process_creation/proc_creation_win_driverquery_lookup.yml
+process.executable:*\\driverquery.exe AND process.command_line:*driverquery* AND process.parent.executable:*\\cmd.exe AND process.parent.command_line:*\/c*
+ 
+./Sigma-Rules/rules/windows/image_load/image_load_nullsoft_installer.yml
+file.path:*\\Temp\\ns* AND file.path:*.tmp\\System.dll
+ 
+./Sigma-Rules/rules/windows/file_event/file_event_win_nullsoft_installer_execution.yml
+file.path:*\\Temp\\ns* AND file.path:*.tmp\\System.dll
+ 
+./Sigma-Rules/rules/windows/dns_query/dns_query_win_network_splashtop.yml
+(dns.question.name:(*.splashtop.com* OR *.splashtop.eu*)) AND (process.executable:(*\\spupnp.exe OR *\\Dataproxy.exe OR *\\SRServer.exe OR *\\SRFeature.exe OR *\\SSUService.exe OR *\\strwinclt.exe))
+ 
+./Sigma-Rules/rules/windows/dns_query/dns_query_win_network_anydesk.yml
+dns.question.name:*.anydesk.com* AND process.executable:*\\anydesk.exe
+ 
+./Sigma-Rules/rules/windows/dns_query/dns_query_for_ufileio_domain.yml
+dns.question.name:*ufile.io*
+ 
+./Sigma-Rules/rules/windows/builtin/security/win_security_netscan_share_enum_write_check.yml
+winlog.channel:Security AND (event.code:5145 AND winlog.event_data.RelativeTargetName:delete.me AND (winlog.event_data.AccessMask:(0x2 OR 0x130196)) AND winlog.event_data.ObjectType:File)
+ 
+./Sigma-Rules/rules/windows/builtin/system/service_control_manager/win_system_service_disable_defender.yml
+winlog.channel:System AND ((winlog.provider_name:Service\ Control\ Manager AND event.code:7045) AND (winlog.event_data.ImagePath:*Set\-MpPreference* AND winlog.event_data.ImagePath:*\-DisableRealtimeMonitoring* AND winlog.event_data.ImagePath:*powershell*))
+ 
+./Sigma-Rules/rules/windows/builtin/system/service_control_manager/win_system_qbot_exec_via_scheduled_task_with_c.yml
+winlog.channel:System AND (winlog.provider_name:Service\ Control\ Manager AND event.code:7045 AND (winlog.event_data.ImagePath:*regsvr32.exe* AND winlog.event_data.ImagePath:*C$*))
+ 
